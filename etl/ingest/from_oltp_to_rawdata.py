@@ -1,7 +1,7 @@
 import psycopg2 # Conectar com postgres
 import pandas as pd
 import yaml
-from google.cloud import storage #Conectar com storage GCP
+from google.cloud import storage # Conectar com storage GCP
 
 if __name__ == '__main__':
     with open(r"C:\Users\Felipe\OneDrive\OneDrive\Área de Trabalho\py-gcp\config\config.yaml", encoding="utf8") as file: #'r' para interpetar string como bruta

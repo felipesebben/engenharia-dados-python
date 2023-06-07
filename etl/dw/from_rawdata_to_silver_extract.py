@@ -32,13 +32,18 @@ def rodar():
     try:
         df_arquivos_legado = dd.read_csv(f"gs://{bucket_processed}/from-rawdata-to-silver/*", encoding="iso-8859-1",
                                          sep=";") # ler todos os arquivos do diretorio com desk
-        df_arquivos_legado = df_arquivos_legado.compute() # converter objeto desk para DataFrame
+        df_arquivos_legado = df_arquivos_legado.compute() # converter objeto dask para DataFrame
         
     except:
         df_arquivos_legado = pd.DataFrame({"arquivo": None}, index=[0])
 
     list_legado = df_arquivos_legado["arquivo"].to_list()
-    print(list_legado)
+    
+    # ---- 4. iniciar loop para cada item do nosso dicionario ---- #
+    for i in objetos:
+        pasta = objetos[i]["pasta"]
+        client_storage = storage.Client.from_service_account_json(credentials_path)
+        
     
 if __name__ == "__main__":
     rodar()

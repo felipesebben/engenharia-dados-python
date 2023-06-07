@@ -51,10 +51,10 @@ if __name__ == "__main__":
     data = response.json()["data"] # armazenar os dados
     df = pd.DataFrame(data)
 
-    # obter o total de paginas
+    # ---- 3. obter o total de paginas ---- #
     total_paginas = int(response.json()["admpages"]["total_pages"])
     
-    # obter lista de DataFrames
+    # ---- 4. obter lista de DataFrames ---- #
     lista_de_dfs = [df]
 
 
@@ -67,12 +67,12 @@ if __name__ == "__main__":
         df = pd.DataFrame(data)
         lista_de_dfs.append(df)
     
-    # concatenar lista de DataFrames em um unico df
+    # ---- 5. concatenar lista de DataFrames em um unico df ---- #
     df_final = pd.concat(lista_de_dfs, ignore_index=True)
 
     df = df_final.copy() # fazer alteracoes em uma copia
 
-    # etapa de ingestao para o storage
+    # ---- 6. etapa de ingestao para o storage ---- #
     client_storage = storage.Client.from_service_account_json(credentials_path)
 
     if df.shape[0] > 0:

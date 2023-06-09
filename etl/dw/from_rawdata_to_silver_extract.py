@@ -44,6 +44,35 @@ def rodar():
         pasta = objetos[i]["pasta"]
         client_storage = storage.Client.from_service_account_json(credentials_path)
         
-    
+        bucket = client_storage.get_bucket(bucket_raw)
+        blob_list = list(bucket.list_blobs(prefix=f"{parent_folder}/{pasta}")) # filtrar arquivos em que o prefixo do arquivo tenha o parent folder + nome pasta
+
+        list_dfs = [] # lista de DataFrames
+
+        for blob in blob_list:
+            id_file = f"{blob.name}_{blob.updated.strftime('%Y%m%d%H%M%S')}" # criar id baseado no nome do blob + timestamp de ultima atualizacao
+            
+            if "orders" in blob.name or "order_details" in blob.name: # tabelas- fato - checar se houve alteracoes
+                if not id_file in list_legado: # checar se id_file existe na lista de legados
+                    print(f"Arquivo {blob.name} será processado para silver pois é novo.")
+                    list_dfs_executados.append(pd.DataFrame({"arquivo": id_file}, index=[0])) # popular lista com arquivos processados
+
+                else:
+                    print(f"Arquivo {blob.name} não será processado para silver pois já foi alimentado no dw anteriormente.")
+
+                    return {"deve-rodar": False}
+            
+            file_bytes = blob.download_as_bytes() # tudo que nao for orders, fazer download de memoria
+            file_buffer = io.BytesIO(file_bytes) # transformar em buffer para nao sobrecarregar memoria
+            df = pd.read_csv(file_buffer, encoding='iso-8859-1', sep=";")
+
+            list_dfs.append(df)
+
+        # ---- 5. empilhar os dataframes lidos do rawdata ---- #
+        combined_df = pd.concat(list_dfs, ignore_index=True)
+        objetos[i]["df"] = combined_df
+
+    print(objetos["df_employees"]["df"])
+
 if __name__ == "__main__":
     rodar()

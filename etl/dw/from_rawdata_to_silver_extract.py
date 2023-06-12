@@ -4,6 +4,7 @@ from google.cloud import storage
 import yaml
 import dask.dataframe as dd
 
+
 def rodar():
     # ---- 1. alimentar as variaveis a partir do yaml ---- #
     with open(r"C:\Users\Felipe\OneDrive\OneDrive\Área de Trabalho\py-gcp\config\config.yaml", encoding="utf8") as file:
@@ -68,11 +69,19 @@ def rodar():
 
             list_dfs.append(df)
 
-        # ---- 5. empilhar os dataframes lidos do rawdata ---- #
+        # ---- 5. empilhar os DataFrames lidos do rawdata ---- #
         combined_df = pd.concat(list_dfs, ignore_index=True)
         objetos[i]["df"] = combined_df
 
-    print(objetos["df_employees"]["df"])
+    
+    # ---- 6. empilhar os DataFrames dos nomes de arquivos ---- #
+    if len(list_dfs_executados) > 0:
+        df_arquivos_lidos = pd.concat(list_dfs_executados, ignore_index=True)
+    
+    return {"deve-rodar": True,
+            "objetos": objetos,
+            "df_arquivos_runtime": df_arquivos_lidos,
+    }
 
 if __name__ == "__main__":
     rodar()

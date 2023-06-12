@@ -31,12 +31,12 @@ def rodar(objetos):
                                      how="left",
                                      on="supplier_id")
     
-    # df_orders_w_suppliers.to_excel(r"C:\Users\Felipe\OneDrive\OneDrive\Área de Trabalho\py-gcp\etl\dw\resultado.xlsx", index=False)
+    # df_orders_w_suppliers.to_excel(r"C:/Users/Felipe/OneDrive/OneDrive/Área de Trabalho/py-gcp/etl/resultado.xlsx", index=False)
     tabelao = df_orders_w_suppliers.copy()
-
+    
     # ---- 2. ler a matriz para filtrar as colunas ---- #
-    df_matriz_colunas = pd.read_excel(r"C:\Users\Felipe\OneDrive\OneDrive\Área de Trabalho\py-gcp\docs\matriz_colunas_do_modelo.xlsx",
-                                      sheet_name="Planilha1", engine="openpyxl")
+    df_matriz_colunas = pd.read_excel(r"C:/Users/Felipe/OneDrive/OneDrive/Área de Trabalho/py-gcp/docs/matriz_colunas_do_modelo.xlsx",
+                                      sheet_name="Planilha1", engine="openpyxl") # se .xls, usar engine="xlrd"
     
     objetos_do_modelo = ["fato_pedidos", "dim_produtos", "dim_categorias",
                          "dim_entregadores", "dim_clientes", "dim_funcionarios",
@@ -47,7 +47,7 @@ def rodar(objetos):
 
     for item in objetos_do_modelo:
         # ---- 4. filtrar a matriz ---- #
-        df_filtrado = df_matriz_colunas[["colunas", "renomear", item]].query(f"{item}=='x'").copy()
+        df_filtrado = df_matriz_colunas[["colunas", "renomear", item]].query(f"{item}=='x'").copy() # retorna as colunas marcadas com x na coluna iterada "item"
 
         # ---- 5. selecionar as colunas do DataFrame final usando o DataFrame filtrado correspondente ---- #
         cols = df_filtrado["colunas"].tolist()
@@ -59,7 +59,7 @@ def rodar(objetos):
         if df_rename.shape[0] > 0: # verificar se DataFrame está vazio
             df_rename = df_rename[["colunas", "renomear"]].copy()
 
-            dict_rename = df_rename.to_dict(orient="list") # necessário fazer o zip
+            dict_rename = df_rename.to_dict(orient="list") # necessário converter em dict para fazer o zip e renomear
             dict_rename = {chave: valor for chave, valor in zip(dict_rename["colunas"], dict_rename["renomear"])}
 
             # print(dict_rename)

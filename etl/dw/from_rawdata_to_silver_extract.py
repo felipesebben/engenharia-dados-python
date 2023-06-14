@@ -34,6 +34,7 @@ def rodar():
         df_arquivos_legado = dd.read_csv(f"gs://{bucket_processed}/from-rawdata-to-silver/*", encoding="iso-8859-1",
                                          sep=";") # ler todos os arquivos do diretorio com desk
         df_arquivos_legado = df_arquivos_legado.compute() # converter objeto dask para DataFrame
+        df_arquivos_legado.rename(columns={df_arquivos_legado[0]: "arquivo"}, inplace=True) # corrigir erro de nomeação de "arquivo"
         
     except:
         df_arquivos_legado = pd.DataFrame({"arquivo": None}, index=[0])
@@ -52,7 +53,6 @@ def rodar():
 
         for blob in blob_list:
             id_file = f"{blob.name}_{blob.updated.strftime('%Y%m%d%H%M%S')}" # criar id baseado no nome do blob + timestamp de ultima atualizacao
-            
             if "orders" in blob.name or "order_details" in blob.name: # tabelas- fato - checar se houve alteracoes
                 if not id_file in list_legado: # checar se id_file existe na lista de legados
                     print(f"Arquivo {blob.name} será processado para silver pois é novo.")
@@ -82,6 +82,7 @@ def rodar():
             "objetos": objetos,
             "df_arquivos_runtime": df_arquivos_lidos,
     }
+
 
 if __name__ == "__main__":
     rodar()

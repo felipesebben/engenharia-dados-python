@@ -25,6 +25,7 @@ def rodar(dict_objetos_finais):
             bucket_path = f"silver/{tabela}/{tabela}.csv"
             blob = bucket.blob(bucket_path)
             blob.upload_from_string(csv_data, content_type="csv")
+        
         except Exception as e:
             print("Houve erro aqui")
             return {"deve-rodar": False,

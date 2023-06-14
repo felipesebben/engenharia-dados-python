@@ -51,7 +51,7 @@ if __name__ == '__main__':
             folder_path = f"oltp-north/{tabela}/{tabela}.csv"
             bucket = client_storage.bucket(bucket_raw)
 
-            # cria csv a aprtir do DataFrame
+            # cria csv a a partir do DataFrame
             csv_data = df.to_csv(index=False, encoding="utf-8-sig", sep=";")
             csv_data = csv_data.encode("iso-8859-1") # encode considerando caracteres latinos
 
@@ -60,8 +60,8 @@ if __name__ == '__main__':
             blob.upload_from_string(csv_data)
 
             # exemplo gs://
-            if tabela == "order_details":
-                df.to_csv(f"gs://{bucket_raw}/{folder_path}", endcoding="utf-8-sig", index=False)
+            # if tabela == "order_details":
+            #     df.to_csv(f"gs://{bucket_raw}/{folder_path}", endcoding="utf-8-sig", index=False)
             
             print(f"Tabela {tabela} carregada no destino")
         

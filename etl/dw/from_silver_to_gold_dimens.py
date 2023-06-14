@@ -24,7 +24,7 @@ def rodar():
     client_bq = bigquery.Client.from_service_account_json(credentials_path)
     modelo = dict_modelo.dict_for_model
 
-    fs = gcsfs.GCSFileSystem()
+    # fs = gcsfs.GCSFileSystem()
 
     # ---- 2. criar lista de arquivos já rodados antes, ou seja, legado
     try:
@@ -42,7 +42,7 @@ def rodar():
 
     list_dfs_executados = []
 
-    for tabela in modelo["dimensoes"]:
+    for tabela in modelo["dimensoes"]: # iterar por cada tabela de dimensões
         # print(modelo["tabelas"][tabela]["bigquery_name"])
 
         gcs_path = modelo["dimensoes"][tabela]["gcs_path"]
@@ -82,7 +82,7 @@ def rodar():
             if deve_rodar:
                 file_bytes = blob.download_as_bytes()
                 file_buffer = io.BytesIO(file_bytes)
-                df = pd.read_csv(file_buffer, encoding="iso-8859-1", sep=";")
+                df = pd.read_csv(file_buffer, encoding=encoding, sep=sep)
 
                 list_dfs.append(df)
 
@@ -107,11 +107,112 @@ def rodar():
 
             except:
                 # quando tabela não existir no GBQ, então somente add o contador para todo o DataFrame e depois carregar para o GBQ
-                df[surrogate] = df.reset_index().index + 1
+                df[surrogate] = df.reset_index().index + 1 # criar índice incremental
 
                 try:
                     df.to_gbq(modelo["dimensoes"][tabela]["bigquery_name"], project_id)
                     print(f"A tabela {table} não existia no BigQuery porém foi criada.")
 
                     if not adicionado_a_lista:
-                        
+                        list_dfs_executados.append(pd.DataFrame({"arquivo": id_file}, index=[0])) # index[0] pois há apenas 1 linha no dict
+                        adicionado_a_lista = True
+                    
+                    fazVerificacoes = False
+
+                except Exception as e:
+                    print(f"A tabela {table} não existe no BigQuery e não foi possível criar devido ao erro {e}")
+
+                    fazVerificacoes = False
+
+            # ---- 6. criar o DataFrame para verificações // cenário onde a tabela já existe ---- #
+            if fazVerificacoes:
+                df_table = pd.read_gbq(f"""select {natural}, {surrogate}
+                                       from {bigquery_name} order by {surrogate} desc
+                                       """,
+                                       project_id=project_id)
+                # print(df_table)
+                maxid = df_table.iloc[0][surrogate]
+
+                print(f"...P: Há novas linhas para ser inseridas? ")
+                df_novas_linhas = df.merge(df_table, on=natural,
+                                           how="outer", indicator=True, 
+                                           suffixes=("", "_y")).query("_merge == 'left_only'").drop(columns="_merge")
+                
+                if df_novas_linhas.shape[0] == 0:
+                    print(f"...R: Não há novas linhas.")
+                
+                else:
+                    df_novas_linhas = df_novas_linhas.drop(columns=df_novas_linhas.filter(regex="_y$").columns)
+                    df_novas_linhas.reset_index()
+                    df_novas_linhas[surrogate] = df_novas_linhas.reset_index().index + maxid + 1 # fazer o incremental sobre novas linhas
+
+                    df_novas_linhas.to_gbq(modelo["dimensoes"][tabela]["bigquery_name"], project_id, if_exists="append")
+                    print("...R: Novas linhas foram inseridas.")
+
+                    if not adicionado_a_lista:
+                        list_dfs_executados.append(pd.DataFrame({"arquivo": id_file}, index=[0]))
+                        adicionado_a_lista = True
+                
+
+                print(f"...P: Há linhas para serem atualizadas? ")
+                
+                if not adicionado_a_lista:
+                    list_dfs_executados.append(pd.DataFrame({"arquivo": id_file}), index=[0])
+                    adicionado_a_lista = True
+                
+                df_para_atualizar = df.merge(df_table, on=natural, how="inner")
+
+                df_para_atualizar = df_para_atualizar.drop(columns=df_para_atualizar.filter(regex="_y$").columns)
+                df_para_atualizar.rename(columns={})
+
+                # print(df_para_atualizar)
+
+                if df_para_atualizar.shape[0] > 0:
+                    stg_table = modelo["dimensoes"][tabela]["bigquery_name"].replace(".dim", ".stg").replace(dataset, "staging")
+                    df_para_atualizar.to_gbq(stg_table, project_id, if_exists="replace")
+                    
+                    atualizaveis = ""
+                    verificaveis = ""
+                    for i in fields_for_updates:
+                        atualizaveis = atualizaveis + "data." + str(i) + " = staging." + str(i) + ","
+                        verificaveis = verificaveis + "data." + str(i) + " <> staging." + str(i) + " or "
+
+                    atualizaveis = atualizaveis[:-1]
+                    verificaveis = verificaveis[:-3]
+
+                    strSQL = f"""
+                        MERGE {bigquery_name} data
+                        USING {stg_table} staging
+                        ON
+                        staging.{natural} = data.{natural}
+                        WHEN MATCHED AND ({verificaveis}) THEN
+                        UPDATE SET
+                            {atualizaveis}
+                    """
+
+                    job = client_bq.query(strSQL)
+                    job.result() # aguardar o job finalizar
+
+                    print(f"...R: As chaves iguais foram encaminhadas ao BQ. Se houve qualquer alteração, foi realizada direto pelo BigQuery.")
+
+                else:
+                    print(f"...R: Não há linhas para serem atualizadas.")
+    
+    # ---- 7. empilhar os DataFrames dos nomes de Arquivos ----
+    if len(list_dfs_executados) > 0:
+        df_arquivos_lidos = pd.concat(list_dfs_executados, ignore_index=True)
+
+    else:
+        df_arquivos_lidos = pd.DataFrame()
+
+    if not df_arquivos_lidos.empty:
+        return {"df_arquivos_runtime": df_arquivos_lidos,
+                "deve-rodar": True}
+    
+    else:
+        return {"df_arquivos_runtime": df_arquivos_lidos,
+                "deve-rodar": False}
+    
+
+if __name__ == "__main__":
+    print(rodar())

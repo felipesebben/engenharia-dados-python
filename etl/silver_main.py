@@ -24,7 +24,7 @@ def rodar():
     
     else:
         transformacao = transform.rodar(extracao["objetos"])
-    '''
+      
     # ---- 4. verificar se deve ou não rodar a carga ---- #
     if len(transformacao) == 0:
         print("Sem necessidade de loading.")
@@ -43,7 +43,7 @@ def rodar():
         else:
             desc_error = carga["description"]
             print(f"Houve algum erro na tentativa de carga da base final!\n\n{desc_error}")
-    '''
+    
 
 if __name__ == "__main__":
     rodar()

@@ -72,7 +72,7 @@ def rodar(objetos):
 
         # ---- 8. aplicar o obs se for a dim_funcionarios
         if "dim_funcionarios" in item:
-            df_final["full_name"] = df_final["first_name"].str.cat(df_final["last_name"], sep=" ")
+            df_final["full_name"] = df_final["first_name"].str.cat(df_final["last_name"], sep=" ") # concatenar duas colunas com separação por espaço
 
         # ---- 9. adicionar o objeto e o DataFrame final ao dicionário
         dict_objetos_finais[item] = {"name": item,
@@ -80,10 +80,10 @@ def rodar(objetos):
                                      "matriz_filtrada": df_filtrado,
                                      }
         
-        # ---- 10. retorno ---- #
-        if len(dict_objetos_finais) > 0:
-            return {"deve-rodar": True,
-                    "dict_objetos_finais": dict_objetos_finais,
-                    }
-        else:
-            return {"deve-rodar": False,}
+    # ---- 10. retorno ---- #
+    if len(dict_objetos_finais) > 0:
+        return {"deve-rodar": True,
+                "dict_objetos_finais": dict_objetos_finais,
+                }
+    else:
+        return {"deve-rodar": False}

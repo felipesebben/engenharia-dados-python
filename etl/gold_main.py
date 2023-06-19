@@ -70,8 +70,14 @@ def rodar():
         df_arquivos_lidos = fatos["df_arquivos_runtime"]
         df_arquivos_lidos.to_csv(f"gs://{bucket_processed}/from-silver-to-gold/{timestamp}.csv", encoding="utf-8-sig", sep=";", index=False)
 
+        return {"df": df_gold.head(),
+                "linhas": df_gold.shape[0]}
+    
     else:
         print("Sem necessidade de rodar as fatos.")
+
+        return {"df": pd.DataFrame(),
+                "linhas": 0}
 
 
 

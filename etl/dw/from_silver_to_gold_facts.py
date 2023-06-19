@@ -73,7 +73,7 @@ def rodar():
         # ---- 5. iniciar validação se deve ou não rodar em todos os arquivos do loop ---- #
         for blob in blob_list:
             updated_time = blob.updated
-            updated_time -= timedelta(hours=3)
+            updated_time -= timedelta(hours=0)
             formatted_time = updated_time.strftime("%Y%m%d%H%M%S")
 
             id_file = f"{blob.name}_{formatted_time}"

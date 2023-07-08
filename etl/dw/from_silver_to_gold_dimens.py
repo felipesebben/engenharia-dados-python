@@ -67,7 +67,7 @@ def rodar():
         # ---- 4. iniciar validação se deve ou não rodar em todos os arquivos do loop ---- #
         for blob in blob_list:
             updated_time = blob.updated
-            updated_time -= timedelta(hours=3)
+            # updated_time -= timedelta(hours=3)
             formatted_time = updated_time.strftime("%Y%m%d%H%M%S")
 
             id_file = f"{blob.name}_{formatted_time}"
@@ -82,7 +82,7 @@ def rodar():
             if deve_rodar:
                 file_bytes = blob.download_as_bytes()
                 file_buffer = io.BytesIO(file_bytes)
-                df = pd.read_csv(file_buffer, encoding=encoding, sep=sep)
+                df = pd.read_csv(file_buffer, encoding="iso-8859-1", sep=";")
 
                 list_dfs.append(df)
 
@@ -157,7 +157,7 @@ def rodar():
                 print(f"...P: Há linhas para serem atualizadas? ")
                 
                 if not adicionado_a_lista:
-                    list_dfs_executados.append(pd.DataFrame({"arquivo": id_file}), index=[0])
+                    list_dfs_executados.append(pd.DataFrame({"arquivo": id_file}, index=[0]))
                     adicionado_a_lista = True
                 
                 df_para_atualizar = df.merge(df_table, on=natural, how="inner")
